@@ -50,4 +50,10 @@ public class Minimap : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     {
         _dragging = false;
     }
+
+    public void OnClickedMinimap(Vector3 position)
+    {
+        // Custom logic for handling the click on the minimap
+        Debug.Log("Clicked on minimap at position: " + position);
+    }
 }
