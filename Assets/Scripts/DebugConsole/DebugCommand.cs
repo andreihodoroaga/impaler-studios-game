@@ -1,5 +1,6 @@
 ﻿/* Adapted from this video tutorial from Game Dev Guide:
  * https://www.youtube.com/watch?v=VzOEM-4A2OM */
+
 using System;
 using System.Collections.Generic;
 
@@ -17,6 +18,7 @@ public class DebugCommandBase
         _description = description;
         _format = format;
 
+        // Register the debug command in the DebugCommands dictionary
         if (DebugCommands == null)
             DebugCommands = new Dictionary<string, DebugCommandBase>();
         string mainKeyword = format.Split(' ')[0];
@@ -26,7 +28,6 @@ public class DebugCommandBase
     public string Id => _id;
     public string Description => _description;
     public string Format => _format;
-
 }
 
 public class DebugCommand : DebugCommandBase
@@ -39,6 +40,7 @@ public class DebugCommand : DebugCommandBase
         _action = action;
     }
 
+    // Invoke the debug command's action
     public void Invoke()
     {
         _action.Invoke();
@@ -55,6 +57,7 @@ public class DebugCommand<T> : DebugCommandBase
         _action = action;
     }
 
+    // Invoke the debug command's action with a value of type T
     public void Invoke(T value)
     {
         _action.Invoke(value);
@@ -71,6 +74,7 @@ public class DebugCommand<T1, T2> : DebugCommandBase
         _action = action;
     }
 
+    // Invoke the debug command's action with values of type T1 and T2
     public void Invoke(T1 v1, T2 v2)
     {
         _action.Invoke(v1, v2);

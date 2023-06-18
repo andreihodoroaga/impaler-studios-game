@@ -7,24 +7,36 @@ namespace BehaviorTree
     {
         private bool _isRandom;
 
-        public Sequence() : base() { _isRandom = false; }
-        public Sequence(bool isRandom) : base() { _isRandom = isRandom; }
+        public Sequence() : base()
+        {
+            _isRandom = false;
+        }
+
+        public Sequence(bool isRandom) : base()
+        {
+            _isRandom = isRandom;
+        }
+
         public Sequence(List<Node> children, bool isRandom = false) : base(children)
         {
             _isRandom = isRandom;
         }
 
+        // Indicates that this node is a flow control node.
         public override bool IsFlowNode => true;
 
+        // Shuffles the elements in a list using a random order.
         public static List<T> Shuffle<T>(List<T> list)
         {
             System.Random r = new System.Random();
             return list.OrderBy(x => r.Next()).ToList();
         }
 
+        // Evaluates the sequence node by evaluating its children in order.
         public override NodeState Evaluate()
         {
             bool anyChildIsRunning = false;
+
             if (_isRandom)
                 children = Shuffle(children);
 
@@ -45,6 +57,7 @@ namespace BehaviorTree
                         return _state;
                 }
             }
+
             _state = anyChildIsRunning ? NodeState.RUNNING : NodeState.SUCCESS;
             return _state;
         }

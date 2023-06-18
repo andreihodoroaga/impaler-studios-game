@@ -1,5 +1,8 @@
+// This script defines the data structure for a technology node in a technology tree.
+
 using System.Collections.Generic;
 using UnityEngine;
+
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -24,21 +27,24 @@ public class TechnologyNodeData : ScriptableObject
     private TechnologyNodeData _parent;
     public TechnologyNodeData Parent => _parent;
 
+    // Method to load the technology tree nodes from scriptable object assets.
     public static void LoadTechnologyTree()
     {
         TECH_TREE_NODES = new Dictionary<string, TechnologyNodeData>();
-        TechnologyNodeData[] nodesData = Resources.LoadAll<TechnologyNodeData>(
-            "ScriptableObjects/TechnologyTree");
+        TechnologyNodeData[] nodesData = Resources.LoadAll<TechnologyNodeData>("ScriptableObjects/TechnologyTree");
 
-        // (record parents for further re-assign)
+        // Create a dictionary to store the parent-child relationships between nodes.
         Dictionary<string, string> parents = new Dictionary<string, string>();
+
+        // Iterate over each loaded node and perform necessary initialization.
         foreach (TechnologyNodeData nodeData in nodesData)
         {
-            // (reset private variables, because the Unity Editor keeps the changes)
             nodeData._parent = null;
             nodeData._unlocked = false;
 
             TECH_TREE_NODES[nodeData.code] = nodeData;
+
+            // Iterate over the children of the node and record their parents for re-assignment later.
             foreach (TechnologyNodeData child in nodeData.children)
             {
                 if (child == null) continue;
@@ -46,14 +52,15 @@ public class TechnologyNodeData : ScriptableObject
             }
         }
 
-        // re-assign parents after all nodes have been loaded and referenced
+        // Re-assign the parent-child relationships after all nodes have been loaded and referenced.
         foreach (KeyValuePair<string, string> p in parents)
             TECH_TREE_NODES[p.Key]._parent = TECH_TREE_NODES[p.Value];
 
-        // auto-unlock root
+        // Automatically unlock the root node.
         TECH_TREE_NODES[ROOT_NODE_CODE]._unlocked = true;
     }
 
+    // Method to get an array of unlocked node codes.
     public static string[] GetUnlockedNodeCodes()
     {
         List<string> unlockedCodes = new List<string>();
@@ -63,6 +70,7 @@ public class TechnologyNodeData : ScriptableObject
         return unlockedCodes.ToArray();
     }
 
+    // Method to set the unlocked status of specific nodes.
     public static void SetUnlockedNodes(string[] unlockedNodeCodes)
     {
         foreach (string code in unlockedNodeCodes)
@@ -71,6 +79,7 @@ public class TechnologyNodeData : ScriptableObject
     }
 
     #if UNITY_EDITOR
+    // Method to get the root node in a directory based on its code.
     public static TechnologyNodeData GetRootNodeInDirectory(string path)
     {
         string[] nodeAssetPaths = System.IO.Directory.GetFiles(path);
@@ -87,6 +96,7 @@ public class TechnologyNodeData : ScriptableObject
     }
     #endif
 
+    // Method to initialize the technology node with the provided code and display name.
     public void Initialize(string code, string displayName = null)
     {
         this.code = code;
@@ -100,15 +110,15 @@ public class TechnologyNodeData : ScriptableObject
         _parent = null;
     }
 
+    // Method to unlock the technology node.
     public void Unlock()
     {
-        // parent node not unlocked: this node is unreachable - abort!
+        // If the parent node is not unlocked, this node is unreachable, so abort.
         if (_parent != null && !_parent._unlocked) return;
-        // node already unlocked - abort!
+        // If the node is already unlocked, abort.
         if (_unlocked) return;
 
         _unlocked = true;
         TechnologyNodeActioners.Apply(code);
     }
-
 }
