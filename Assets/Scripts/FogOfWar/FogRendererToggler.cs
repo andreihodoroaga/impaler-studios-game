@@ -6,115 +6,112 @@ public class FogRendererToggler : MonoBehaviour
     public GameObject mesh; // reference to the render you want toggled based on the position of this transform
     [Range(0f, 1f)] public float threshold = 0.1f; //the threshold for when this script considers myRenderer should render
 
-    private const float _UPDATE_RATE = 0.5f;
+    private const float UpdateRate = 0.5f;
 
-    private Camera _camera; // the camera using the masked render texture
-    private Coroutine _texUpdateCoroutine;
+    private Camera camera; // the camera using the masked render texture
+    private Coroutine texUpdateCoroutine;
 
-    private FogRendererToggler _mainInstance;
+    private static FogRendererToggler mainInstance;
     // made so all instances share the same texture, reducing texture reads
-    private static Texture2D _shadowTexture;
-    private static Rect _rect;
-    private static bool _validTexture = true;
+    private static Texture2D shadowTexture;
+    private static Rect rect;
+    private static bool validTexture = true;
 
     private void Start()
     {
         // disable if:
         // - FOV game parameter is inactive
         // - or no mesh is defined
-        if (
-            !GameManager.instance.gameGlobalParameters.enableFOV ||
-            !mesh
-        ) {
+        if (!GameManager.instance.gameGlobalParameters.enableFOV || !mesh)
+        {
             Destroy(this);
             return;
         }
 
         // also disable if the unit is mine
-        UnitManager um = GetComponent<UnitManager>();
-        if (um != null && um.Unit.Owner == GameManager.instance.gamePlayersParameters.myPlayerId)
+        UnitManager unitManager = GetComponent<UnitManager>();
+        if (unitManager != null && unitManager.Unit.Owner == GameManager.instance.gamePlayersParameters.myPlayerId)
         {
             Destroy(this);
             return;
         }
 
         // mark the "first" (arbitrary) instance as main
-        if (_mainInstance == null)
-            _mainInstance = this;
-
+        if (mainInstance == null)
+        {
+            mainInstance = this;
+        }
 
         // only run the texture updates on the main instance
-        if (_mainInstance == this)
+        if (mainInstance == this)
         {
-            _camera = GameObject.Find("UnexploredAreasCam").GetComponent<Camera>();
-            _texUpdateCoroutine = StartCoroutine(_UpdatingShadowTexture());
+            camera = GameObject.Find("UnexploredAreasCam").GetComponent<Camera>();
+            texUpdateCoroutine = StartCoroutine(UpdatingShadowTexture());
         }
         else
         {
-            _texUpdateCoroutine = null;
+            texUpdateCoroutine = null;
         }
     }
 
     private void OnDisable()
     {
-        if (_texUpdateCoroutine != null)
+        if (texUpdateCoroutine != null)
         {
-            StopCoroutine(_texUpdateCoroutine);
-            _texUpdateCoroutine = null;
-        }    
+            StopCoroutine(texUpdateCoroutine);
+            texUpdateCoroutine = null;
+        }
     }
 
     private void LateUpdate()
     {
-        if (!_camera) return;
-        bool active = _GetColorAtPosition().grayscale >= threshold;
+        if (!camera) return;
+        bool active = GetColorAtPosition().grayscale >= threshold;
         if (mesh.activeSelf != active)
+        {
             mesh.SetActive(active);
+        }
     }
 
-    private void _UpdateShadowTexture()
+    private void UpdateShadowTexture()
     {
-        if (!_camera)
+        if (!camera)
         {
-            _validTexture = false;
+            validTexture = false;
             return;
         }
 
-        RenderTexture renderTexture = _camera.targetTexture;
+        RenderTexture renderTexture = camera.targetTexture;
         if (!renderTexture)
         {
-            _validTexture = false;
+            validTexture = false;
             return;
         }
 
-        if (
-            _shadowTexture == null ||
-            renderTexture.width != _rect.width ||
-            renderTexture.height != _rect.height
-        )
+        if (shadowTexture == null || renderTexture.width != rect.width || renderTexture.height != rect.height)
         {
-            _rect = new Rect(0, 0, renderTexture.width, renderTexture.height);
-            _shadowTexture = new Texture2D((int)_rect.width, (int)_rect.height, TextureFormat.RGB24, false);
+            rect = new Rect(0, 0, renderTexture.width, renderTexture.height);
+            shadowTexture = new Texture2D((int)rect.width, (int)rect.height, TextureFormat.RGB24, false);
         }
 
         RenderTexture.active = renderTexture;
-        _shadowTexture.ReadPixels(_rect, 0, 0);
+        shadowTexture.ReadPixels(rect, 0, 0);
         RenderTexture.active = null;
     }
 
-    private Color _GetColorAtPosition()
+    private Color GetColorAtPosition()
     {
-        if (!_validTexture) return Color.white;
-        Vector3 pixel = _camera.WorldToScreenPoint(transform.position);
-        return _shadowTexture.GetPixel((int)pixel.x, (int)pixel.y);
+        if (!validTexture) return Color.white;
+        Vector3 pixel = camera.WorldToScreenPoint(transform.position);
+        return shadowTexture.GetPixel((int)pixel.x, (int)pixel.y);
     }
 
-    private IEnumerator _UpdatingShadowTexture()
+    private IEnumerator UpdatingShadowTexture()
     {
         while (true)
         {
-            _UpdateShadowTexture();
-            yield return new WaitForSeconds(_UPDATE_RATE);
+            UpdateShadowTexture();
+            yield return new WaitForSeconds(UpdateRate);
         }
     }
 }
