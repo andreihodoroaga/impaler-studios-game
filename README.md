@@ -1,6 +1,6 @@
 # impaler-studios-game
 Game created for <b>MDS</b> class. <br />
-You can watch a demo of the game here: <https://youtu.be/1j-VE8IPlb0>.
+Watch a demo of the game here: <https://youtu.be/1j-VE8IPlb0>.
 # Team 
 <b>Andrei Hodoroaga 251 </b><br />
 <b>Andrei Nicula 252</b> <br />
